@@ -1,3 +1,10 @@
+/*
+ * File: Userinterface.cpp
+ * Owner: Kellen Schmidt
+ * Update History:
+ *
+ */
+
 #include "userinterface.h"
 #include <cstdlib>
 #include <iostream>
@@ -247,7 +254,7 @@ void UserInterface::displayQueryMenu()
 bool UserInterface::isAllCharsDigit(string word)
 {
     // Loop through each character in the string
-    for(int i=0; i<word.length(); i++)
+    for(size_t i=0; i<word.length(); i++)
     {
         // If any character is a letter then return false
         if(isalpha(word[i]))
