@@ -7,9 +7,7 @@ class UserInterface
 public:
     UserInterface();
 
-signals:
 
-public slots:
 };
 
 #endif // USERINTERFACE_H
