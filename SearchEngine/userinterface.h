@@ -1,15 +1,20 @@
 #ifndef USERINTERFACE_H
 #define USERINTERFACE_H
 
+#include <string>
 
 class UserInterface
 {
 public:
     UserInterface();
+    void displayMainMenu();
 
-signals:
-
-public slots:
+private:
+    void printTitle();
+    void enterMaintenanceMode();
+    void enterInteractiveMode();
+    void displayQueryMenu();
+    bool isAllCharsDigit(std::string);
 };
 
 #endif // USERINTERFACE_H
