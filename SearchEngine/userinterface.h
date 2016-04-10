@@ -16,12 +16,16 @@ public:
     UserInterface();
     void displayMainMenu();
 
+<<<<<<< HEAD
+
+=======
 private:
     void printTitle();
     void enterMaintenanceMode();
     void enterInteractiveMode();
     void displayQueryMenu();
     bool isAllCharsDigit(std::string);
+>>>>>>> f3216982b8afeb792731f1330d8dc156e1ac887b
 };
 
 #endif // USERINTERFACE_H
