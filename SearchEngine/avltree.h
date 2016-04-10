@@ -2,6 +2,7 @@
 //
 #include <iostream>
 
+using namespace std;
 #ifndef AVLTREE_H
 #define AVLTREE_H
 
@@ -20,6 +21,78 @@ class AvlTree
 private:
     TreeNode<var>* root;
 
+    //Rotations Begin
+    TreeNode<var>* rr_rotation(TreeNode<var>* parent)
+    {
+        TreeNode<var>* temp = parent->right;
+        parent->right = temp->left;
+        temp->left = parent;
+        return temp;
+    }
+
+    TreeNode<var>* ll_rotation(TreeNode<var>* parent)
+    {
+        TreeNode<var>* temp = parent->left;
+        parent->left = temp->right;
+        temp->right = parent;
+        return temp;
+    }
+
+    TreeNode<var>* lr_rotation(TreeNode<var>* parent)
+    {
+        TreeNode<var>* temp = parent->left;
+        parent->left = rr_rotation(temp);
+        return ll_rotation(parent);
+    }
+
+    TreeNode<var>* rl_rotation(TreeNode<var>* parent)
+    {
+        TreeNode<var>* temp = parent->right;
+        parent->right = ll_rotation(temp);
+        return rr_rotation(parent);
+    }
+
+    //Rotations end
+    int height(TreeNode<var>* curr)
+    {
+        int h = 0;
+        if(curr!= NULL)
+        {
+            int l_height = height(curr->left);
+            int r_height = height(curr->right);
+            int max_height = max(l_height, r_height);
+            h = max_height + 1;
+        }
+        return h;
+    }
+
+    int height_Diff(TreeNode<var>* curr)
+    {
+        int l_height = height(curr->left);
+        int r_height = height(curr->right);
+        int diff = l_height - r_height;
+        return diff;
+    }
+
+    TreeNode<var>* balance(TreeNode<var>* curr)
+    {
+        int bal_factor = height_Diff(curr);
+        if(bal_factor > 1)
+        {
+            if(height_Diff(curr->left) > 0)
+                curr = ll_rotation(curr);
+            else
+                curr = lr_rotation(curr);
+        }
+        else if(bal_factor < -1)
+        {
+            if(height_Diff(curr->right) > 0)
+                curr = rl_rotation(curr);
+            else
+                curr = rr_rotation(curr);
+        }
+        return curr;
+    }
 
     void heightHelper(var val, TreeNode<var>* &curr, int &counter)
     {
@@ -62,11 +135,13 @@ private:
             {
                 std::cout << "branch left\n";
                 insert(val, curr->left);
+                curr = balance(curr);
             }
             if(curr->data < val)
             {
                 std::cout << "branch right\n";
                 insert(val, curr->right);
+                curr = balance(curr);
             }
         }
     }
