@@ -1,3 +1,10 @@
+/*
+ * File: porter2_stemmer.h
+ * Name: Kellen Schmidt
+ * Update History:
+ *
+ */
+
 /**
  * @file porter2_stemmer.h
  * @author Sean Massung
