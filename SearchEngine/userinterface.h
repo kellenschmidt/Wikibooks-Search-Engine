@@ -8,6 +8,7 @@
 #ifndef USERINTERFACE_H
 #define USERINTERFACE_H
 
+#include "indexhandler.h"
 #include <string>
 
 class UserInterface
@@ -17,6 +18,7 @@ public:
     void displayMainMenu();
 
 private:
+    IndexHandler indexhandler;
     void printTitle();
     void enterMaintenanceMode();
     void enterInteractiveMode();
