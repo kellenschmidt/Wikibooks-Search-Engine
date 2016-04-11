@@ -226,6 +226,9 @@ void UserInterface::displayQueryMenu()
     // Convert input string to int
     int choiceInt = atoi(choice.c_str());
 
+    // Create variable to store query
+    string query;
+
     // Execute chosen menu item
     switch(choiceInt)
     {
@@ -234,7 +237,12 @@ void UserInterface::displayQueryMenu()
         break;
     case 1:
         // TODO: Call some function to recieve process and output results of boolean query
-        cout << "\nThis is where you call fancy function to recieve and process search\n";
+        cout << "\nEnter query: ";
+
+        getline(cin, query);
+
+        //QueryProcessor processor(query);
+        //processor.processQuery();
         break;
     case 2:
         cout << "\nSEARCH ENGINE STATISTICS:\n"
