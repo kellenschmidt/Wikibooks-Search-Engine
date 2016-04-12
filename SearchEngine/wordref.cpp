@@ -5,6 +5,7 @@
  *
  */
 
+#include "pagelocation.h"
 #include "wordref.h"
 
 using namespace std;
@@ -24,7 +25,7 @@ std::string WordRef::getWord()
     return word;
 }
 
-void WordRef::setCorpusFreq(long cf)
+void WordRef::setCorpusFreq(int cf)
 {
     corpusFreq = cf;
 }
@@ -34,10 +35,10 @@ long WordRef::getCorpusFreq()
     return corpusFreq;
 }
 
-void WordRef::insertRef(long pageID, long wordIndex)
+void WordRef::insertRef(int pageID, int wordIndex)
 {
     // Add the word index to the set of word indices located at pageID
-    refs[pageID].insert(wordIndex);
+    ///if(pageID)
     // Increment the number of times the word is found in the corpus
     corpusFreq++;
 }

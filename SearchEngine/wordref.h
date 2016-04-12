@@ -10,23 +10,23 @@
 
 #include "pagelocation.h"
 #include <string>
-#include <unordered_map>
-#include <set>
+#include <vector>
 
 class WordRef
 {
 private:
     std::string word;
-    std::unordered_map<long, std::set<long>> refs;
-    long corpusFreq;
+    // Possibly try list instead of vector and time speed difference
+    std::vector<PageLocation> refs;
+    int corpusFreq;
 
 public:
     WordRef();
     void setWord(std::string);
     std::string getWord();
-    void setCorpusFreq(long);
-    long getCorpusFreq();
-    void insertRef(long, long);
+    void setCorpusFreq(int);
+    int getCorpusFreq();
+    void insertRef(int, int);
 };
 
 #endif // WORDREF_H
