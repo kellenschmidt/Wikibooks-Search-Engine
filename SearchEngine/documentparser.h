@@ -8,6 +8,8 @@ private:
 
 public:
     DocumentParser();
+    void parseFile(int);
+
 
 };
 
