@@ -9,6 +9,7 @@
 #define WORDREF_H
 
 #include "pagelocation.h"
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -21,12 +22,15 @@ private:
 
 public:
     WordRef();
+    WordRef(std::string, int, std::vector<PageLocation>);
     void setWord(std::string);
     std::string getWord();
     void setCorpusFreq(int);
     int getCorpusFreq();
-    // Not implemented yet
-    void insertRef(int, int);
+    void insertRef(int, std::vector<int>);
+    bool operator<(WordRef);
+    bool operator==(WordRef);
+    friend std::ostream& operator<<(std::ostream&, WordRef);
 };
 
 #endif // WORDREF_H

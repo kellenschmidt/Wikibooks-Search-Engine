@@ -7,6 +7,8 @@
 
 #include "pagelocation.h"
 #include "wordref.h"
+#include <iostream>
+#include <vector>
 
 using namespace std;
 
@@ -15,7 +17,15 @@ WordRef::WordRef()
     corpusFreq = 0;
 }
 
-void WordRef::setWord(std::string w)
+WordRef::WordRef(string w, int cf, vector<PageLocation> ref)
+{
+    setWord(w);
+    setCorpusFreq(cf);
+    refs = ref;
+
+}
+
+void WordRef::setWord(string w)
 {
     word = w;
 }
@@ -27,18 +37,40 @@ std::string WordRef::getWord()
 
 void WordRef::setCorpusFreq(int cf)
 {
-    corpusFreq = cf;
+
+
+    if(cf >= 0 && cf <= 2147483648)
+        corpusFreq = cf;
+    else
+        cerr << "Error: Cannot set corpus frequency, corpusFreq is either negative or out of range\n";
 }
 
-long WordRef::getCorpusFreq()
+int WordRef::getCorpusFreq()
 {
     return corpusFreq;
 }
 
-void WordRef::insertRef(int pageID, int wordIndex)
+void WordRef::insertRef(int pageID, vector<int> indices)
 {
-    // Add the word index to the set of word indices located at pageID
-    ///if(pageID)
-    // Increment the number of times the word is found in the corpus
-    corpusFreq++;
+    // Create PageLocation object from arguments and add it to vector
+    PageLocation pl(pageID, indices);
+    refs.push_back(pl);
+
+    // Add the number of new indicies to the total corpus frequency
+    corpusFreq+=indices.size();
+}
+
+bool WordRef::operator<(WordRef ref)
+{
+    return word < ref.getWord();
+}
+
+bool WordRef::operator==(WordRef ref)
+{
+    return word == ref.getWord();
+}
+
+ostream& operator<<(ostream& os, WordRef ref)
+{
+    return os << ref.word << "\n";
 }
