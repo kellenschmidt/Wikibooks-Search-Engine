@@ -8,16 +8,15 @@
 #ifndef WORDREF_H
 #define WORDREF_H
 
-#include "pagelocation.h"
 #include <string>
 #include <unordered_map>
-#include <list>
+#include <set>
 
 class WordRef
 {
 private:
     std::string word;
-    std::unordered_map<long, std::list<long>> refs;
+    std::unordered_map<long, std::set<long>> refs;
     long corpusFreq;
 
 public:

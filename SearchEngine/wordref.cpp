@@ -37,7 +37,7 @@ long WordRef::getCorpusFreq()
 void WordRef::insertRef(long pageID, long wordIndex)
 {
     // Add the word index to the set of word indices located at pageID
-    refs[pageID].push_back(wordIndex);
+    refs[pageID].insert(wordIndex);
     // Increment the number of times the word is found in the corpus
     corpusFreq++;
 }

@@ -124,7 +124,6 @@ private:
     {
         if(curr==nullptr)
         {
-            std::cout << "val" << val << "\n";
             TreeNode<var>* leaf = new TreeNode<var>;
             leaf->data = val;
             curr = leaf;
@@ -133,13 +132,11 @@ private:
         {
             if(val < curr->data)
             {
-                std::cout << "branch left\n";
                 insert(val, curr->left);
                 curr = balance(curr);
             }
             if(curr->data < val)
             {
-                std::cout << "branch right\n";
                 insert(val, curr->right);
                 curr = balance(curr);
             }
