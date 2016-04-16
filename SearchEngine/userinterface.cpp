@@ -5,6 +5,8 @@
  *
  */
 
+#include "documentparser.h"
+#include "indexhandler.h"
 #include "userinterface.h"
 #include <cstdlib>
 #include <iostream>
@@ -116,6 +118,9 @@ void UserInterface::enterMaintenanceMode()
     // Convert input string to int
     int choiceInt = atoi(choice.c_str());
 
+    // Create variable to hold the path input by user
+    string path;
+
     // Execute chosen menu item
     switch(choiceInt)
     {
@@ -123,7 +128,10 @@ void UserInterface::enterMaintenanceMode()
         displayMainMenu();
         break;
     case 1:
-        cout << "\nThis is where new documents will be added\n";
+        cout << "\nEnter path to new documents: ";
+        getline(cin, path);
+
+        indexhandler.addPath(path);
         break;
     case 2:
         cout << "\nThis is where the index will be cleared\n";
@@ -181,9 +189,11 @@ void UserInterface::enterInteractiveMode()
         break;
     case 1:
         cout << "\nThis is where index will be loaded into AVL tree\n";
+        indexhandler.setIndexType(choiceInt);
         break;
     case 2:
         cout << "\nThis is where index will be loaded into hash table\n";
+        indexhandler.setIndexType(choiceInt);
         break;
     default:
         cerr << "Error: Invalid choice in interactive mode\n";
