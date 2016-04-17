@@ -1,7 +1,8 @@
 #include "indexhandler.h"
 #include "documentparser.h"
-///#include "indexinterface.h"
+#include "indexinterface.h"
 #include "wordref.h"
+#include "avltree.h"
 #include "rapidxml.hpp"
 #include "rapidxml_print.hpp"
 #include <string>
@@ -31,7 +32,7 @@ vector<WordRef> IndexHandler::indexPaths(const vector<string>& paths)
     // Get the new WordRefs that are indexed and add them to the vector of all new WordRefs
     for(size_t i=0; i<paths.size(); i++)
     {
-        ///dp.parseFile(paths[i], index, newRefs);
+        dp.parseFile(paths[i], index, newRefs);
         refs.insert(refs.end(), newRefs.begin(), newRefs.end());
     }
     return refs;
@@ -76,18 +77,18 @@ void IndexHandler::clearPaths()
     newPaths.clear();
 }
 
-/**
 void IndexHandler::createIndex()
 {
     // Create the type of the index based on the index type
     if(indexType == 1)
-        index = new AvlTree<wordRef>;
-    else if(indexType == 2)
-        index = new HashTableIndex;
+        index = new AvlTree;
+    else if(indexType == 2){
+        ///index = new HashTableIndex;
+        cout << "\nHash Table not yet implemented\n";}
     else
         cerr << "Error: Could not create index, invalid index type\n";
 }
-**/
+
 void IndexHandler::writePersistentIndex(const vector<WordRef>& wordRefs)
 {
     // Open file if there aren't any WordRef

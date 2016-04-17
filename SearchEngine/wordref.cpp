@@ -22,7 +22,6 @@ WordRef::WordRef(string w, int cf, const vector<PageLocation>& ref)
     setWord(w);
     setCorpusFreq(cf);
     refs = ref;
-
 }
 
 void WordRef::setWord(string w)
@@ -37,8 +36,6 @@ std::string WordRef::getWord() const
 
 void WordRef::setCorpusFreq(int cf)
 {
-
-
     if(cf >= 0)
         corpusFreq = cf;
     else

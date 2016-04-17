@@ -1,7 +1,7 @@
 #ifndef INDEXHANDLER_H
 #define INDEXHANDLER_H
 
-///#include "indexinterface.h"
+#include "indexinterface.h"
 #include "wordref.h"
 #include <fstream>
 #include <vector>
@@ -10,7 +10,7 @@
 class IndexHandler
 {
 private:
-    ///IndexInterface *index;
+    IndexInterface *index;
     std::vector<std::string> filePaths;
     std::vector<std::string> newPaths;
     // 1 = AVLTree, 2 = HashTable

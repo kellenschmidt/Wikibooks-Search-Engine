@@ -153,10 +153,6 @@ void UserInterface::enterInteractiveMode()
 {
     cout << "\nINTERACTIVE MODE\n\n";
 
-    /// TODO: First check if persistent index exists
-    /// If it doesn't exit, then stop and display error
-    /// Then prompt to go to maintenance mode
-
     // Display menu and recieve input
     cout << "0. Back to main menu\n"
          << "1. Load index into AVL tree\n"
