@@ -10,6 +10,8 @@
 #include "userinterface.h"
 #include <cstdlib>
 #include <iostream>
+#include <iomanip>
+#include <fstream>
 #include <cctype>
 #include <string>
 #include <limits>
@@ -137,7 +139,7 @@ void UserInterface::enterMaintenanceMode()
         indexhandler.addPath(path);
         break;
     case 2:
-        indexhandler.clearPaths();
+        indexhandler.clearIndex();
         cout << "\nIndex cleared.\n";
         break;
     default:
@@ -165,17 +167,11 @@ void UserInterface::enterInteractiveMode()
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
-   while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2 ||
-          (indexhandler.getPaths().empty() && stoi(choice) != 0))
+   while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2)
     {
-        // Print error if there are no file paths or input is bad
-        if(indexhandler.getPaths().empty())
-            cout << "\nYou must add documents before loading index\n";
-        else
-            cout << "\nChoice must be in the range of 0 - 2.\n";
-
-        // Redisplay menu and recieve input
-        cout << "0. Back to main menu\n"
+        // Print error, redisplay menu, and recieve input
+        cout << "\nChoice must be in the range of 0 - 2.\n"
+             << "0. Back to main menu\n"
              << "1. Load index into AVL tree\n"
              << "2. Load index into hash table\n"
              << "Choose option: ";
@@ -204,11 +200,23 @@ void UserInterface::enterInteractiveMode()
         exit(EXIT_FAILURE);
     }
 
-    if(indexhandler.getNewPaths().empty())
+    // Index is empty and no new documents are staged to add
+    // Read persistent index into index
+    if(indexhandler.getPaths().empty() && indexhandler.getNewPaths().empty())
     {
-        indexhandler.readPersistentIndex();
+        // If file already exists then read the persistent index
+        if(ifstream(indexhandler.getFileName()))
+        {
+            indexhandler.readPersistentIndex();
+        }
+        else
+        {
+            cout << "\nYou must add documents before loading index\n";
+            enterInteractiveMode();
+        }
     }
-    else
+    // If there are documents staged to add then add them to index and persistent index
+    else if(!indexhandler.getNewPaths().empty())
     {
         // Store all of the WordRefs that are indexed in a vector
         // Index all of the new paths
@@ -272,11 +280,24 @@ void UserInterface::displayQueryMenu()
         ///processor.processQuery();
         break;
     case 2:
+    {
         cout << "\nSEARCH ENGINE STATISTICS:\n"
-             << "\nTotal number of pages indexed: "
-             << "\nTotal number of words indexed: "
+             << "\nTotal number of pages indexed: " << indexhandler.getNumPages()
+             << "\nTotal number of words indexed: " << indexhandler.getNumWords()
              << "\nTop 50 most frequent words: \n";
+
+        // Create the vector of the top 50 word-frequency pairs
+        std::vector<std::pair<std::string,int>> top50Words = indexhandler.getTop50Words();
+
+        // Print the column titles
+        cout << "    " << setw(30) << left << "Word" << "Frequency\n";
+        // Print the top 50 list
+        for(size_t n=0; n<top50Words.size(); n++)
+        {
+            cout << setw(2) << right << n+1 << ". " << setw(30) << left << top50Words[n].first << top50Words[n].second << "\n";
+        }
         break;
+    }
     default:
         cerr << "Error: Invalid choice in boolean query menu mode\n";
         exit(EXIT_FAILURE);

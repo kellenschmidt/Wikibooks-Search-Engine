@@ -14,7 +14,9 @@ using namespace std;
 
 WordRef::WordRef()
 {
-    corpusFreq = 0;
+    setWord("");
+    setCorpusFreq(0);
+    refs = {};
 }
 
 WordRef::WordRef(string w, int cf, const vector<PageLocation>& ref)

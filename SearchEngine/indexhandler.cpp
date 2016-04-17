@@ -9,19 +9,23 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <cstdio>
+#include <algorithm>
 
 using namespace std;
 
 IndexHandler::IndexHandler()
 {
     indexType = 0;
-    fileName = "Persistent Index.txt";
+    numWords = 0;
+    numPages = 0;
+    fileName = "PersistentIndex.txt";
 }
 
 vector<WordRef> IndexHandler::indexPaths(const vector<string>& paths)
 {
     /// Maybe put stopwords into an array instead of reading them from file
-    DocumentParser dp("stopwords.txt");
+    DocumentParser dp;
 
     // Create vector to store all of the WordRefs that are indexed
     vector<WordRef> refs;
@@ -35,6 +39,31 @@ vector<WordRef> IndexHandler::indexPaths(const vector<string>& paths)
         dp.parseFile(paths[i], index, newRefs);
         refs.insert(refs.end(), newRefs.begin(), newRefs.end());
     }
+
+    // Add the number of new WordRefs to the total number of WordRefs
+    numPages += refs.size();
+
+    // Create a vector of string-int pairs where the string is the word
+    // and the int is the corpus frequency for that word
+    vector<pair<string,int>> pairs;
+
+    // Create a pair for each WordRef and add them to a vector
+    for(size_t m=0; m<refs.size(); m++)
+    {
+        string word = refs[m].getWord();
+        int corpFreq = refs[m].getCorpusFreq();
+        pair<string,int> token = make_pair(word, corpFreq);
+        pairs.push_back(token);
+    }
+
+    // Sort the vector of string-int pairs based on the int value from greatest to least
+    sort(pairs.begin(), pairs.end(), [](const pair<string,int> &left, const pair<string,int> &right) {
+        return left.second > right.second;
+    });
+
+    // Copy the top 50 most frequent words to the top50Words vector
+    copy(pairs.begin(), pairs.begin() + (pairs.size() > 50 ? 50 : pairs.size()), top50Words.begin());
+
     return refs;
 }
 
@@ -51,6 +80,21 @@ int IndexHandler::getIndexType()
     return indexType;
 }
 
+int IndexHandler::getNumWords()
+{
+    return numWords;
+}
+
+int IndexHandler::getNumPages()
+{
+    return numPages;
+}
+
+std::vector<std::pair<std::string,int>> IndexHandler::getTop50Words()
+{
+    return top50Words;
+}
+
 vector<string>& IndexHandler::getPaths()
 {
     return filePaths;
@@ -59,6 +103,11 @@ vector<string>& IndexHandler::getPaths()
 vector<string>& IndexHandler::getNewPaths()
 {
     return newPaths;
+}
+
+string IndexHandler::getFileName()
+{
+    return fileName;
 }
 
 void IndexHandler::addPath(string newPath)
@@ -71,10 +120,13 @@ void IndexHandler::addNewPath(string newPath)
     newPaths.push_back(newPath);
 }
 
-void IndexHandler::clearPaths()
+void IndexHandler::clearIndex()
 {
     filePaths.clear();
     newPaths.clear();
+    numWords = 0;
+    numPages = 0;
+    remove(fileName.c_str());
 }
 
 void IndexHandler::createIndex()
@@ -91,33 +143,40 @@ void IndexHandler::createIndex()
 
 void IndexHandler::writePersistentIndex(const vector<WordRef>& wordRefs)
 {
-    // Open file if there aren't any WordRef
-    if(filePaths.empty())
-    {
-        // Open file for output
-        persistentIndexFile.open(fileName, ios::out);
+    // Open file for output
+    persistentIndexFile.open(fileName, ios::out);
 
-        // Verify that file was opened correctly
-        if(!persistentIndexFile)
-        {
-            cerr << "Error: Output file \"" << fileName << "\" was not opened correctly\n";
-            exit(EXIT_FAILURE);
-        }
+    // Verify that file was opened correctly
+    if(!persistentIndexFile)
+    {
+        cerr << "Error: Output file \"" << fileName << "\" was not opened correctly\n";
+        exit(EXIT_FAILURE);
     }
 
+    // Create DOM tree
     rapidxml::xml_document<> doc;
+
+    // Loop through each WordRef in vector
     for(size_t i=0; i<wordRefs.size(); i++)
     {
         rapidxml::xml_node<> *wordRef = doc.allocate_node(rapidxml::node_element, "wordRef");
         rapidxml::xml_attribute<> *word = doc.allocate_attribute("word", wordRefs[i].getWord().c_str());
         wordRef->append_attribute(word);
+
+        // Get the vector of PageLocations for the current WordRef
         vector<PageLocation> refs = wordRefs[i].getRefs();
+
+        // Loop through each PageLocation in the vector
         for(size_t j=0; j<refs.size(); j++)
         {
             rapidxml::xml_node<> *pair = doc.allocate_node(rapidxml::node_element, "pair");
             rapidxml::xml_attribute<> *id = doc.allocate_attribute("id", to_string(refs[j].getPageID()).c_str());
             pair->append_attribute(id);
+
+            // Get the vector of indicies where the word is found in the text
             vector<int> wordIndices = refs[j].getWordIndices();
+
+            // Create a space delineated string of the indices
             string indicesStr = "";
             for(size_t k=0; k<wordIndices.size(); k++)
             {
