@@ -52,7 +52,7 @@ void UserInterface::displayMainMenu()
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
-    while(!isAllCharsDigit(choice) || atoi(choice.c_str()) < 0 || atoi(choice.c_str()) > 2)
+    while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2)
     {
         // Print error, redisplay menu, and recieve input
         cout << "\nChoice must be in the range of 0 - 2.\n"
@@ -66,7 +66,7 @@ void UserInterface::displayMainMenu()
     }
 
     // Convert input string to int
-    int choiceInt = atoi(choice.c_str());
+    int choiceInt = stoi(choice);
 
     // Execute chosen menu item
     switch(choiceInt)
@@ -102,21 +102,21 @@ void UserInterface::enterMaintenanceMode()
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
-    while(!isAllCharsDigit(choice) || atoi(choice.c_str()) < 0 || atoi(choice.c_str()) > 2)
+    while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2)
     {
         // Print error, redisplay menu, and recieve input
         cout << "\nChoice must be in the range of 0 - 2.\n"
              << "0. Back to main menu\n"
              << "1. Add documents\n"
              << "2. Clear index\n"
-             << "Choose mode: ";
+             << "Choose option: ";
         cin >> choice;
         // Ignore characters after and including spaces
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 
     // Convert input string to int
-    int choiceInt = atoi(choice.c_str());
+    int choiceInt = stoi(choice);
 
     // Create variable to hold the path input by user
     string path;
@@ -131,10 +131,14 @@ void UserInterface::enterMaintenanceMode()
         cout << "\nEnter path to new documents: ";
         getline(cin, path);
 
+        // Add path to vector of all paths and
+        // vector of new paths to be added to persistent index
+        indexhandler.addNewPath(path);
         indexhandler.addPath(path);
         break;
     case 2:
-        cout << "\nThis is where the index will be cleared\n";
+        indexhandler.clearPaths();
+        cout << "\nIndex cleared.\n";
         break;
     default:
         cerr << "Error: Invalid choice in maintenance mode\n";
@@ -165,21 +169,27 @@ void UserInterface::enterInteractiveMode()
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
-    while(!isAllCharsDigit(choice) || atoi(choice.c_str()) < 0 || atoi(choice.c_str()) > 2)
+   while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2 ||
+          (indexhandler.getPaths().empty() && stoi(choice) != 0))
     {
-        // Print error, redisplay menu, and recieve input
-        cout << "\nChoice must be in the range of 0 - 2.\n"
-             << "0. Back to main menu\n"
+        // Print error if there are no file paths or input is bad
+        if(indexhandler.getPaths().empty())
+            cout << "\nYou must add documents before loading index\n";
+        else
+            cout << "\nChoice must be in the range of 0 - 2.\n";
+
+        // Redisplay menu and recieve input
+        cout << "0. Back to main menu\n"
              << "1. Load index into AVL tree\n"
              << "2. Load index into hash table\n"
-             << "Choose mode: ";
+             << "Choose option: ";
         cin >> choice;
         // Ignore characters after and including spaces
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 
     // Convert input string to int
-    int choiceInt = atoi(choice.c_str());
+    int choiceInt = stoi(choice);
 
     // Execute chosen menu item
     switch(choiceInt)
@@ -188,11 +198,9 @@ void UserInterface::enterInteractiveMode()
         displayMainMenu();
         break;
     case 1:
-        cout << "\nThis is where index will be loaded into AVL tree\n";
         indexhandler.setIndexType(choiceInt);
         break;
     case 2:
-        cout << "\nThis is where index will be loaded into hash table\n";
         indexhandler.setIndexType(choiceInt);
         break;
     default:
@@ -200,8 +208,22 @@ void UserInterface::enterInteractiveMode()
         exit(EXIT_FAILURE);
     }
 
-    // Automatically redisplay menu after executing command
-    displayQueryMenu();
+    if(indexhandler.getNewPaths().empty())
+    {
+        indexhandler.readPersistentIndex();
+    }
+    else
+    {
+        // Store all of the WordRefs that are indexed in a vector
+        // Index all of the new paths
+        vector<WordRef> refs = indexhandler.indexPaths(indexhandler.getNewPaths());
+
+        // Write new WordRefs to the persistent index
+        indexhandler.writePersistentIndex(refs);
+
+        // Display next menu
+        displayQueryMenu();
+    }
 }
 
 void UserInterface::displayQueryMenu()
@@ -220,21 +242,21 @@ void UserInterface::displayQueryMenu()
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
-    while(!isAllCharsDigit(choice) || atoi(choice.c_str()) < 0 || atoi(choice.c_str()) > 2)
+    while(!isAllCharsDigit(choice) || stoi(choice) < 0 || stoi(choice) > 2)
     {
         // Print error, redisplay menu, and recieve input
         cout << "\nChoice must be in the range of 0 - 2.\n"
              << "0. Back to interactive mode menu\n"
              << "1. Enter boolean query\n"
              << "2. Get search engine statistics\n"
-             << "Choose mode: ";
+             << "Choose option: ";
         cin >> choice;
         // Ignore characters after and including spaces
         cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 
     // Convert input string to int
-    int choiceInt = atoi(choice.c_str());
+    int choiceInt = stoi(choice);
 
     // Create variable to store query
     string query;
@@ -248,11 +270,10 @@ void UserInterface::displayQueryMenu()
     case 1:
         // TODO: Call some function to recieve process and output results of boolean query
         cout << "\nEnter query: ";
-
         getline(cin, query);
 
-        //QueryProcessor processor(query);
-        //processor.processQuery();
+        ///QueryProcessor processor(query);
+        ///processor.processQuery();
         break;
     case 2:
         cout << "\nSEARCH ENGINE STATISTICS:\n"

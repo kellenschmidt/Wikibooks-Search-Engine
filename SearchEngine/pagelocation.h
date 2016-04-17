@@ -11,9 +11,10 @@ private:
 
 public:
     PageLocation();
-    PageLocation(int, std::vector<int>);
+    PageLocation(int, const std::vector<int>&);
     void setPageID(int);
     int getPageID();
+    std::vector<int> getWordIndices();
     void addWordIndex(int);
 };
 

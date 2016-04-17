@@ -9,7 +9,7 @@ PageLocation::PageLocation()
     pageID = 0;
 }
 
-PageLocation::PageLocation(int pi, vector<int> indices)
+PageLocation::PageLocation(int pi, const vector<int>& indices)
 {
     setPageID(pi);
     wordIndices = indices;
@@ -17,7 +17,7 @@ PageLocation::PageLocation(int pi, vector<int> indices)
 
 void PageLocation::setPageID(int pi)
 {
-    if(pi >= 0 && pi <= 2147483648)
+    if(pi >= 0)
         pageID = pi;
     else
         cerr << "Error: Cannot set page ID, pageID is either negative or out of range\n";
@@ -26,6 +26,11 @@ void PageLocation::setPageID(int pi)
 int PageLocation::getPageID()
 {
     return pageID;
+}
+
+vector<int> PageLocation::getWordIndices()
+{
+    return wordIndices;
 }
 
 void PageLocation::addWordIndex(int newIndex)

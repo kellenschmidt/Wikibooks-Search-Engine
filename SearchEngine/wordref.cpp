@@ -17,7 +17,7 @@ WordRef::WordRef()
     corpusFreq = 0;
 }
 
-WordRef::WordRef(string w, int cf, vector<PageLocation> ref)
+WordRef::WordRef(string w, int cf, const vector<PageLocation>& ref)
 {
     setWord(w);
     setCorpusFreq(cf);
@@ -30,7 +30,7 @@ void WordRef::setWord(string w)
     word = w;
 }
 
-std::string WordRef::getWord()
+std::string WordRef::getWord() const
 {
     return word;
 }
@@ -39,7 +39,7 @@ void WordRef::setCorpusFreq(int cf)
 {
 
 
-    if(cf >= 0 && cf <= 2147483648)
+    if(cf >= 0)
         corpusFreq = cf;
     else
         cerr << "Error: Cannot set corpus frequency, corpusFreq is either negative or out of range\n";
@@ -50,7 +50,12 @@ int WordRef::getCorpusFreq()
     return corpusFreq;
 }
 
-void WordRef::insertRef(int pageID, vector<int> indices)
+vector<PageLocation> WordRef::getRefs() const
+{
+    return refs;
+}
+
+void WordRef::insertRef(int pageID, const vector<int>& indices)
 {
     // Create PageLocation object from arguments and add it to vector
     PageLocation pl(pageID, indices);

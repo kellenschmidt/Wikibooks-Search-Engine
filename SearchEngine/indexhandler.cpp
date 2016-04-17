@@ -1,8 +1,9 @@
 #include "indexhandler.h"
 #include "documentparser.h"
-#include "indexinterface.h"
+///#include "indexinterface.h"
 #include "wordref.h"
 #include "rapidxml.hpp"
+#include "rapidxml_print.hpp"
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -16,14 +17,24 @@ IndexHandler::IndexHandler()
     fileName = "Persistent Index.txt";
 }
 
-void IndexHandler::indexPaths()
+vector<WordRef> IndexHandler::indexPaths(const vector<string>& paths)
 {
-    // Maybe put stopwords into an array instead of reading them from file
+    /// Maybe put stopwords into an array instead of reading them from file
     DocumentParser dp("stopwords.txt");
-    for(int i=0; i<filePaths.size(); i++)
+
+    // Create vector to store all of the WordRefs that are indexed
+    vector<WordRef> refs;
+    // Create vector to store the most recently indexed WordRefs
+    vector<WordRef> newRefs;
+
+    // Parse the xml file at each path
+    // Get the new WordRefs that are indexed and add them to the vector of all new WordRefs
+    for(size_t i=0; i<paths.size(); i++)
     {
-        dp.parseFile(filePaths[i], index);
+        ///dp.parseFile(paths[i], index, newRefs);
+        refs.insert(refs.end(), newRefs.begin(), newRefs.end());
     }
+    return refs;
 }
 
 void IndexHandler::setIndexType(int it)
@@ -39,11 +50,33 @@ int IndexHandler::getIndexType()
     return indexType;
 }
 
+vector<string>& IndexHandler::getPaths()
+{
+    return filePaths;
+}
+
+vector<string>& IndexHandler::getNewPaths()
+{
+    return newPaths;
+}
+
 void IndexHandler::addPath(string newPath)
 {
     filePaths.push_back(newPath);
 }
 
+void IndexHandler::addNewPath(string newPath)
+{
+    newPaths.push_back(newPath);
+}
+
+void IndexHandler::clearPaths()
+{
+    filePaths.clear();
+    newPaths.clear();
+}
+
+/**
 void IndexHandler::createIndex()
 {
     // Create the type of the index based on the index type
@@ -54,22 +87,52 @@ void IndexHandler::createIndex()
     else
         cerr << "Error: Could not create index, invalid index type\n";
 }
-
-void IndexHandler::writePersistentIndex()
+**/
+void IndexHandler::writePersistentIndex(const vector<WordRef>& wordRefs)
 {
-    // Open file for output
-    persistentIndexFile.open(fileName, ios::out);
-
-    // Verify that file was opened correctly
-    if(!persistentIndexFile)
+    // Open file if there aren't any WordRef
+    if(filePaths.empty())
     {
-        cerr << "Error: Output file \"" << fileName << "\" was not opened correctly\n";
-        exit(EXIT_FAILURE);
+        // Open file for output
+        persistentIndexFile.open(fileName, ios::out);
+
+        // Verify that file was opened correctly
+        if(!persistentIndexFile)
+        {
+            cerr << "Error: Output file \"" << fileName << "\" was not opened correctly\n";
+            exit(EXIT_FAILURE);
+        }
     }
 
+    rapidxml::xml_document<> doc;
+    for(size_t i=0; i<wordRefs.size(); i++)
+    {
+        rapidxml::xml_node<> *wordRef = doc.allocate_node(rapidxml::node_element, "wordRef");
+        rapidxml::xml_attribute<> *word = doc.allocate_attribute("word", wordRefs[i].getWord().c_str());
+        wordRef->append_attribute(word);
+        vector<PageLocation> refs = wordRefs[i].getRefs();
+        for(size_t j=0; j<refs.size(); j++)
+        {
+            rapidxml::xml_node<> *pair = doc.allocate_node(rapidxml::node_element, "pair");
+            rapidxml::xml_attribute<> *id = doc.allocate_attribute("id", to_string(refs[j].getPageID()).c_str());
+            pair->append_attribute(id);
+            vector<int> wordIndices = refs[j].getWordIndices();
+            string indicesStr = "";
+            for(size_t k=0; k<wordIndices.size(); k++)
+            {
+                indicesStr += wordIndices[k];
+                indicesStr += " ";
+            }
+            rapidxml::xml_attribute<> *indices = doc.allocate_attribute("indices", indicesStr.c_str());
+            pair->append_attribute(indices);
+            wordRef->append_node(pair);
+        }
+    }
 
+    // Write DOM tree to output file
+    persistentIndexFile << doc;
 
-
+    // Close input file
     persistentIndexFile.close();
 }
 
@@ -135,7 +198,7 @@ void IndexHandler::readPersistentIndex()
             // Read each integer index and add it to the vector
             while(indicesSS >> indexStr)
             {
-                indicesVect.push_back(indexStr);
+                indicesVect.push_back(stoi(indexStr));
             }
 
             // Add the page location data to the WordRef
@@ -146,7 +209,7 @@ void IndexHandler::readPersistentIndex()
         }
 
         // Insert the WordRef into the index
-        index.insert(wr);
+        ///index.insert(wr);
 
         // Go to the next wordRef in the
         wordRef = wordRef->next_sibling("wordRef");

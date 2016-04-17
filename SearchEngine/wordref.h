@@ -17,17 +17,18 @@ class WordRef
 {
 private:
     std::string word;
-    std::vector<PageLocation> refs;
     int corpusFreq;
+    std::vector<PageLocation> refs;
 
 public:
     WordRef();
-    WordRef(std::string, int, std::vector<PageLocation>);
+    WordRef(std::string, int, const std::vector<PageLocation>&);
     void setWord(std::string);
-    std::string getWord();
+    std::string getWord() const;
     void setCorpusFreq(int);
     int getCorpusFreq();
-    void insertRef(int, std::vector<int>);
+    std::vector<PageLocation> getRefs() const;
+    void insertRef(int, const std::vector<int>&);
     bool operator<(WordRef);
     bool operator==(WordRef);
     friend std::ostream& operator<<(std::ostream&, WordRef);
