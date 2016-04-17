@@ -5,6 +5,7 @@
 #include "rapidxml.hpp"
 #include <unordered_set>
 #include "avltree.h"
+#include "wordref.h"
 using namespace std;
 class DocumentParser
 {
@@ -19,7 +20,7 @@ public:
     DocumentParser();
     DocumentParser(string stopwordsPath);
     //, IndexInterface &index
-    void parseFile(string path, AvlTree<string> *tree);
+    void parseFile(string path, AvlTree<string> *tree, vector<WordRef> &persist);
     bool isStopWord(string &word);
     void stem(string &word);
     void makeLower(string &word);

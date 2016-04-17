@@ -21,7 +21,7 @@ DocumentParser::DocumentParser(string stopwordsPath)
 
 using namespace std;
 //, IndexInterface &index
-void DocumentParser::parseFile(string path, AvlTree<string> *tree)
+void DocumentParser::parseFile(string path, AvlTree<string> *tree, vector<WordRef> &persist)
 {
     ifstream xmlFile(path);
     //add error checking
@@ -122,6 +122,7 @@ void DocumentParser::addToMainIntex(string &text, string &docId, AvlTree<string>
 
     int rightInd;
     //allocate a wordref here
+    WordRef ref;
     for(int leftInd=0;leftInd<tokens.size();++leftInd)
     {
         //TODO: add token to wordref
