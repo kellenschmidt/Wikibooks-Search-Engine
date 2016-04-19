@@ -133,6 +133,14 @@ void UserInterface::enterMaintenanceMode()
         cout << "\nEnter path to new documents: ";
         getline(cin, path);
 
+        while(!ifstream(path))
+        {
+            cout << "Invalid path.\nEnter path to new documents (\"0\" to return to Maintenance Mode): ";
+            getline(cin, path);
+            if(path == "0")
+                enterMaintenanceMode();
+        }
+
         // Add path to vector of all paths and
         // vector of new paths to be added to persistent index
         indexhandler.addNewPath(path);
@@ -276,8 +284,8 @@ void UserInterface::displayQueryMenu()
         cout << "\nEnter query: ";
         getline(cin, query);
 
-        ///QueryProcessor processor(query);
-        ///processor.processQuery();
+        ///QueryProcessor processor();
+        ///processor.processQuery(query);
         break;
     case 2:
     {

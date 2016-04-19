@@ -25,7 +25,7 @@ IndexHandler::IndexHandler()
 vector<WordRef> IndexHandler::indexPaths(const vector<string>& paths)
 {
     /// Maybe put stopwords into an array instead of reading them from file
-    DocumentParser dp;
+    DocumentParser dp("stopwords.txt");
 
     // Create vector to store all of the WordRefs that are indexed
     vector<WordRef> refs;

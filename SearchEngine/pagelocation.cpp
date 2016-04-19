@@ -7,6 +7,7 @@ using namespace std;
 PageLocation::PageLocation()
 {
     pageID = 0;
+    wordIndices = {};
 }
 
 PageLocation::PageLocation(int pi, const vector<int>& indices)
