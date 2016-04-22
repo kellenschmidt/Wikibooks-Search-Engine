@@ -9,6 +9,7 @@
 #define WORDREF_H
 
 #include "pagelocation.h"
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -16,17 +17,22 @@ class WordRef
 {
 private:
     std::string word;
-    std::vector<PageLocation> refs;
     int corpusFreq;
+    std::vector<PageLocation> refs;
 
 public:
     WordRef();
+    WordRef(std::string, int, std::vector<PageLocation>&);
     void setWord(std::string);
-    std::string getWord();
+    std::string getWord() const;
     void setCorpusFreq(int);
     int getCorpusFreq();
-    // Not implemented yet
-    void insertRef(int, int);
+    std::vector<PageLocation>& getRefs();
+    void insertRef(int, std::vector<int>&);
+    bool operator<(WordRef);
+    bool operator==(WordRef);
+    friend std::ostream& operator<<(std::ostream&, WordRef);
+    void sortRefs();
 };
 
 #endif // WORDREF_H
