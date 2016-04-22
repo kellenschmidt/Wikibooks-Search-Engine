@@ -58,6 +58,7 @@ void QueryProcessor::findPages(WordRef* ref)
         locs.push_back(results.at(i));
     }
     //locs
+    cout << "This word appears in " << results.size() << " documents" << endl;
     printPages(locs);
 }
 
