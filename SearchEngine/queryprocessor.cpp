@@ -58,7 +58,7 @@ void QueryProcessor::findPages(WordRef* ref)
         locs.push_back(results.at(i));
     }
     //locs
-    printPages(results);
+    printPages(locs);
 }
 
 void QueryProcessor::printPages(vector<PageLocation> &results)
