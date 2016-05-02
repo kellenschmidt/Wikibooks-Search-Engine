@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/stopwords.txt">
+        <file>stopwords.txt</file>
+    </qresource>
+</RCC>

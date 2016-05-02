@@ -1,0 +1,14 @@
+How to use:
+
+How to format a query:
+- To enter a simple query, enter a single word and press search.
+- To modify a simple query with NOT, enter a single word followed by NOT, Not, or not and as many words as you would like to exclude
+- To use the OR boolean, begin the query with OR, Or, or or followed by as many words as you would like. This can be used with the NOT modifier
+- To use the AND boolearn, begin the query with AND, And, or and followed by as many words as you would like. This can be used with the NOT modifier
+THINGS NOT TO DO:
+- Do not enter any punctuation
+- Do not enter the same word multiple times in the same query
+- Do not use any non alphabetical characters
+- Do not use OR or AND anywhere except at the beginning of the query
+- Do not use NOT at the beginning of a query
+- Do not enter more than 1 word in a simple query

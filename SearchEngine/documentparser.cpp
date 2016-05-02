@@ -1,8 +1,4 @@
-/* Lucas Hansen
- * Currently, the document parser only works with Luke's main.cpp
- */
 #include "documentparser.h"
-//#include "indexinterface.h"
 #include "wordref.h"
 #include "avltree.h"
 #include <iostream>
@@ -14,67 +10,56 @@
 #include <algorithm>
 #include <sstream>
 #include "myhash.h"
+
+DocumentParser::DocumentParser()
+{
+}
+
 DocumentParser::DocumentParser(string stopwordsPath)
 {
     readStopWords(stopwordsPath);
 }
 
 using namespace std;
-//, IndexInterface &index
-void DocumentParser::parseFile(string path, IndexInterface *tree)
+
+
+void DocumentParser::parseFile(string path, IndexInterface *data)
 {
-    ifstream xmlFile(path);
-    //add error checking
-    string xmlFileString;
+    files.emplace_back();
+    XMLFile &file = files.back();
+    file.setDocument(path);
 
-    xmlFile.seekg(0, ios::end);
-    xmlFileString.reserve(xmlFile.tellg());
-    xmlFile.seekg(0, ios::beg);
-
-    xmlFileString.assign((istreambuf_iterator<char>(xmlFile)), istreambuf_iterator<char>());
-    rapidxml::xml_document<> doc;
-    //rapidxml::parse_non_destructive|rapidxml::parse_no_data_nodes
-    doc.parse<rapidxml::parse_no_data_nodes>(&xmlFileString[0]);
-    rapidxml::xml_node<> *page = doc.first_node("mediawiki")->first_node("page");
+    rapidxml::xml_node<> *page = file.getFirstPage();
     rapidxml::xml_node<> *elem;
     string title, id, text;
-    cout << "read into DOM tree" << endl;
 
     while(page!=NULL)
     {
         //extracts the necessary imformation from the xml page
-        elem = page->first_node("title");
-        title = elem->value();
-        elem = elem->next_sibling("id"); //need to put something here
+        elem = page->first_node("id");
         id = elem->value();
         elem = elem->next_sibling("revision");
         elem = elem->first_node("text");
         text = elem->value();
         page = page->next_sibling("page");
-
-        addToMainIntex(text, id, tree);
-        //will need to add the document number and file path to another data structure for lookup
-        //add possibly another one for user/editor name, etc..
-        //addToFileIndex();
+        addToMainIntex(text, id, data);
     }
-
-    xmlFile.close();
-    doc.clear();
 }
 
 void DocumentParser::readStopWords(string path)
 {
+    stopwords.clear();
     ifstream file(path);
     string word;
     while(file>>word)
     {
         stopwords.insert(word);
     }
+    cout << "stopwords" << stopwords.size() << endl;
 }
 
 bool DocumentParser::isStopWord(string &word)
 {
-
     return stopwords.find(word) != stopwords.end();
 }
 
@@ -89,11 +74,11 @@ void DocumentParser::makeLower(string &word)
     transform(word.begin(), word.end(), word.begin(), ::tolower);
 }
 
-void DocumentParser::addToMainIntex(string &text, string &docId, IndexInterface *tree)
+void DocumentParser::addToMainIntex(string &text, string &docId, IndexInterface *ind)
 {
     //stringstream to tokenize page elements
     stringstream ss(text);
-    string token;
+    string token = "";
     vector<pair<string,int>> tokens;
     //use pairs to tie pages to
     pair<string, int> tokPair;
@@ -101,6 +86,7 @@ void DocumentParser::addToMainIntex(string &text, string &docId, IndexInterface 
     string beforeStem;
     while (ss>>token)
     {
+        trimPunct(token);
         //add code to check beginning for punctuation
         if(token.size()<20 && isalpha(token[0]) && isalpha(token[token.size()-1]))
         {
@@ -151,30 +137,14 @@ void DocumentParser::addToMainIntex(string &text, string &docId, IndexInterface 
         tokRef.setWord(tokens.at(leftInd).first);
         tokRef.insertRef(stoi(docId), indicies);
 
-        //This block of code adds all the words to the std::unordered_map, called test, in the header file
-        //--------------------------------------------------------------
-        /*
-        if(test.find(tokRef.getWord())==test.end())
-        {
-            test[tokRef.getWord()] = tokRef;
-        }
-        else
-        {
-            test[tokRef.getWord()].insertRef(stoi(docId),indicies);
-        }
-        */
-        //---------------------------------------------------------------
-
-
         //this block of code is used to add words to the IndexInterface, whichever type it is
-        //hashtable is not yet implemented fully
         //---------------------------------------------------------------
 
-        indWRefPtr = tree->searchVal(tokRef);
+        indWRefPtr = ind->searchVal(tokRef);
 
         if(indWRefPtr==nullptr)
         {
-            tree->insert(tokRef);
+            ind->insert(tokRef);
         }
         else
         {
@@ -182,9 +152,81 @@ void DocumentParser::addToMainIntex(string &text, string &docId, IndexInterface 
         }
 
         //---------------------------------------------------------------
-
-
-
         leftInd = rightInd;
+
     }
+}
+
+void DocumentParser::trimPunct(string &word)
+{
+    if(word[0]=='<')
+    {
+        size_t closing = word.find('>');
+        if(closing!=string::npos)
+        {
+            word = word.substr(closing+1);
+        }
+    }
+    if(word[word.size()-1]=='>')
+    {
+        size_t opening = word.find_last_of('<');
+        if(opening!=string::npos)
+        {
+            word = word.substr(0,opening);
+        }
+    }
+
+    size_t l,r;
+    for(l=0;l<word.size() && !isalpha(word[l]);l++);
+    for(r=word.size()-1;r>l && !isalpha(word[r]);r--);
+
+    if(l!=0 || r!=word.size()-1)
+        word = word.substr(l,r-l+1);
+
+    if(word.find_first_of('<')!=string::npos || word.find_first_of('>')!=string::npos || word.find_first_of('&')!=string::npos)
+        word="";
+}
+
+void DocumentParser::addFromPersistent(string path)
+{
+    files.emplace_back();
+    XMLFile &file = files.back();
+    file.setDocument(path);
+}
+
+rapidxml::xml_node<>* DocumentParser::getPage(int pageId)
+{
+    rapidxml::xml_node<>* node = nullptr;
+    for(XMLFile &f:files)
+    {
+        node = f.getPage(pageId);
+        if(node!=nullptr)
+            return node;
+    }
+    return node;
+}
+
+int DocumentParser::getPagesIndexed()
+{
+    int total = 0;
+    for(XMLFile &f:files)
+    {
+        total+=f.getPageCount();
+    }
+    return total;
+}
+
+void DocumentParser::clearFiles()
+{
+    files.clear();
+}
+
+vector<string> DocumentParser::getFilesAdded()
+{
+    vector<string> filePaths;
+    for(XMLFile &f:files)
+    {
+        filePaths.push_back(f.getName());
+    }
+    return filePaths;
 }
