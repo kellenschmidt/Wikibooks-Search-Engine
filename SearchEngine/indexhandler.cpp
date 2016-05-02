@@ -4,14 +4,13 @@
 #include "wordref.h"
 #include "avltree.h"
 #include "rapidxml.hpp"
-#include "rapidxml_print.hpp"
+#include "myhash.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <fstream>
 #include <cstdio>
 #include <algorithm>
-#include "myhash.h"
 
 using namespace std;
 
@@ -20,57 +19,21 @@ IndexHandler::IndexHandler()
     indexType = 0;
     numWords = 0;
     numPages = 0;
-    fileName = "PersistentIndex.txt";
+    fileName = "PersistentIndex.xml";
+    dp.readStopWords("stopwords.txt");
+    index = nullptr;
 }
 
 void IndexHandler::indexPaths(const vector<string>& paths)
 {
-    /// Maybe put stopwords into an array instead of reading them from file
-    DocumentParser dp("stopwords.txt");
-
     // Parse the xml file at each path
     for(size_t i=0; i<paths.size(); i++)
     {
         dp.parseFile(paths[i], index);
     }
 
-    // Add the number of new WordRefs to the total number of WordRefs
-    ///numWords += refs.size();
-
-    // Create a vector of string-int pairs where the string is the word
-    // and the int is the corpus frequency for that word
-    vector<pair<string,int>> pairs;
-
-    /// Traverse the tree here
-
-    // Create a pair for each WordRef and add them to a vector
-    /*for(size_t m=0; m<refs.size(); m++)
-    {
-        string word = refs[m].getWord();
-        int corpFreq = refs[m].getCorpusFreq();
-        pair<string,int> token = make_pair(word, corpFreq);
-        pairs.push_back(token);
-    }*/
-
-    // Sort the vector of string-int pairs based on the int value from greatest to least
-    sort(pairs.begin(), pairs.end(), [](const pair<string,int> &left, const pair<string,int> &right)
-    {
-        if(left.second == right.second)
-            return left.first < right.first;
-        else
-            return left.second > right.second;
-    });
-
-    // Copy the top 50 most frequent words to the top50Words vector
-    if(pairs.size() <= 50)
-        top50Words = pairs;
-    else
-    {
-        for(size_t g=0; g<50; g++)
-        {
-            top50Words.push_back(pairs[g]);
-        }
-    }
+    // Clear the vector of the new paths that were added to the index
+    newPaths.clear();
 }
 
 void IndexHandler::setIndexType(int it)
@@ -79,11 +42,6 @@ void IndexHandler::setIndexType(int it)
         indexType = it;
     else
         cerr << "Error: Cannot set indexType, invalid index type\n";
-}
-
-int IndexHandler::getIndexType()
-{
-    return indexType;
 }
 
 int IndexHandler::getNumWords()
@@ -126,17 +84,38 @@ void IndexHandler::addNewPath(string newPath)
     newPaths.push_back(newPath);
 }
 
+void IndexHandler::clearTop50Words()
+{
+    top50Words.clear();
+}
+
+void IndexHandler::deleteIndex()
+{
+    if(index != nullptr)
+    {
+        delete index;
+        index = nullptr;
+    }
+    numWords = 0;
+    numPages = 0;
+}
+
 void IndexHandler::clearIndex()
 {
     filePaths.clear();
     newPaths.clear();
-    numWords = 0;
-    numPages = 0;
+    top50Words.clear();
     remove(fileName.c_str());
+    dp.clearFiles();
+    deleteIndex();
 }
 
 void IndexHandler::createIndex()
 {
+    // Don't create index if it already exists
+    if(index != nullptr)
+        return;
+
     // Create the type of the index based on the index type
     if(indexType == 1)
         index = new AvlTree;
@@ -145,10 +124,59 @@ void IndexHandler::createIndex()
     }
     else
         cerr << "Error: Could not create index, invalid index type\n";
+    }
+
+void IndexHandler::calculateStats()
+{
+    // Get the total number of WordRefs in the index
+    numWords = index->getNumElements();
+
+    // Get the total number of pages indexed
+    numPages = dp.getPagesIndexed();
+
+    // Create a vector of string-int pairs where the string is the word
+    // and the int is the corpus frequency for that word
+    vector<pair<string,int>> pairs;
+
+    // Create vector of pointers to all wordRefs in index
+    vector<WordRef*> refs = index->getIters();
+
+    // Create a pair for each WordRef and add them to a vector
+    for(int i=0; i<refs.size(); i++)
+    {
+        string word = refs[i]->getWord();
+        int corpFreq = refs[i]->getCorpusFreq();
+        pair<string,int> token = make_pair(word, corpFreq);
+        pairs.push_back(token);
+    }
+
+    // Sort the vector of string-int pairs based on the int value from greatest to least
+    sort(pairs.begin(), pairs.end(), [](const pair<string,int> &left, const pair<string,int> &right)
+    {
+        if(left.second == right.second)
+            return left.first < right.first;
+        else
+            return left.second > right.second;
+    });
+
+    // Copy the top 50 most frequent words to the top50Words vector
+    if(pairs.size() <= 50)
+        top50Words = pairs;
+    else
+    {
+        for(size_t g=0; g<50; g++)
+        {
+            top50Words.push_back(pairs[g]);
+        }
+    }
 }
 
 void IndexHandler::writePersistentIndex()
 {
+    // Don't write persistent index if index is empty
+    if(index == nullptr || filePaths.empty())
+        return;
+
     // Open file for output
     persistentIndexFile.open(fileName, ios::out);
 
@@ -159,54 +187,51 @@ void IndexHandler::writePersistentIndex()
         exit(EXIT_FAILURE);
     }
 
-    // Create DOM tree
-    rapidxml::xml_document<> doc;
+    persistentIndexFile << "<persistentIndex>\n";
+
+    // Write file paths to persistent index
+    for(int m=0; m<filePaths.size(); m++)
+    {
+        persistentIndexFile << "<filePath>" << filePaths[m] << "</filePath>\n";
+    }
+
+    // Create vector of pointers to all wordRefs in index
+    vector<WordRef*> refs = index->getIters();
 
     // Loop through each WordRef in vector
-    /*for(size_t i=0; i<wordRefs.size(); i++)
+    for(int i=0; i<refs.size(); i++)
     {
-        rapidxml::xml_node<> *wordRef = doc.allocate_node(rapidxml::node_element, "wordRef");
-        rapidxml::xml_node<> *word = doc.allocate_node(rapidxml::node_element, "word");
-        word->value(wordRefs[i].getWord().c_str());
-        wordRef->append_node(word);
+        persistentIndexFile << "<wordRef>\n<word>" << refs[i]->getWord() << "</word>\n";
 
         // Get the vector of PageLocations for the current WordRef
-        vector<PageLocation> refs = wordRefs[i].getRefs();
+        vector<PageLocation> pages =refs[i]->getRefs();
 
         // Loop through each PageLocation in the vector
-        for(size_t j=0; j<refs.size(); j++)
+        for(size_t j=0; j<pages.size(); j++)
         {
-            rapidxml::xml_node<> *pair = doc.allocate_node(rapidxml::node_element, "pair");
-            rapidxml::xml_node<> *id = doc.allocate_node(rapidxml::node_element, "id");
-            id->value(to_string(refs[j].getPageID()).c_str());
-            pair->append_node(id);
+            persistentIndexFile << "<pair>\n<id>" << pages[j].getPageID() << "</id>\n";
 
             // Get the vector of indicies where the word is found in the text
-            vector<int> wordIndices = refs[j].getWordIndices();
+            vector<int> wordIndices = pages[j].getWordIndices();
+
+            persistentIndexFile << "<indices>";
 
             // Create a space delineated string of the indices
-            string indicesStr = "";
             for(size_t k=0; k<wordIndices.size(); k++)
             {
-                indicesStr += wordIndices[k];
-                indicesStr += " ";
+                persistentIndexFile << wordIndices[k] << " ";
             }
-            rapidxml::xml_node<> *indices = doc.allocate_node(rapidxml::node_element, "indices");
-            indices->value(indicesStr.c_str());
-            pair->append_node(indices);
-            wordRef->append_node(pair);
-        }
-        doc.append_node(wordRef);
-    }*/
 
-    // Write DOM tree to output file
-    string xmlAsString;
-    rapidxml::print(back_inserter(xmlAsString), doc);
-    persistentIndexFile << doc;
+            persistentIndexFile << "</indices>\n</pair>\n";
+        }
+        persistentIndexFile << "</wordRef>\n";
+    }
+
+    persistentIndexFile << "</persistentIndex>";
+
 
     // Close input file
     persistentIndexFile.close();
-    doc.clear();
 }
 
 void IndexHandler::readPersistentIndex()
@@ -233,20 +258,32 @@ void IndexHandler::readPersistentIndex()
     // Create DOM tree
     rapidxml::xml_document<> doc;
     ///rapidxml::parse_non_destructive|rapidxml::parse_no_data_nodes
-    doc.parse<rapidxml::parse_no_data_nodes>(&xmlFileString[0]);
+    doc.parse<0>(&xmlFileString[0]);
 
     // Create the pointers to move around tree, pair has  dummy value
-    rapidxml::xml_node<> *wordRef = doc.first_node("wordRef");
-    rapidxml::xml_node<> *pair = doc.first_node("wordRef");
+    rapidxml::xml_node<> *pointer = doc.first_node("persistentIndex")->first_node("filePath");
+    rapidxml::xml_node<> *pair;
     rapidxml::xml_node<> *elem;
 
+    // Read file paths from the persistent index
+    while(pointer != NULL)
+    {
+        string path = pointer->value();
+        dp.addFromPersistent(path);
+        addPath(path);
+        pointer = pointer->next_sibling("filePath");
+    }
 
-    while(wordRef != NULL)
+    pointer = doc.first_node("persistentIndex")->first_node("wordRef");
+
+    while(pointer != NULL)
     {
         WordRef wr;
         //extracts the necessary imformation from the xml wordRef
-        elem = wordRef->first_node("word");
+        elem = pointer->first_node("word");
+
         string word = elem->value();
+
         // Set the word of WordRef
         wr.setWord(word);
 
@@ -258,7 +295,6 @@ void IndexHandler::readPersistentIndex()
             string id = elem->value();
             elem = elem->next_sibling("indices");
             string indices = elem->value();
-            pair = pair->next_sibling("pair");
 
             // Convert id to integer
             int idInt = stoi(id);
@@ -279,17 +315,19 @@ void IndexHandler::readPersistentIndex()
 
             // Clear vector for new indicies in next pair
             indicesVect.clear();
+
+            // Continue to next pair in current wordRef
+            pair = pair->next_sibling("pair");
         }
 
         // Insert the WordRef into the index
         index->insert(wr);
 
         // Go to the next wordRef in the
-        wordRef = wordRef->next_sibling("wordRef");
-
-        persistentIndexFile.close();
-        doc.clear();
+        pointer = pointer->next_sibling("wordRef");
     }
+    persistentIndexFile.close();
+    doc.clear();
 }
 
 WordRef* IndexHandler::searchIndex(std::string& searchWord)
@@ -297,4 +335,9 @@ WordRef* IndexHandler::searchIndex(std::string& searchWord)
     WordRef ref;
     ref.setWord(searchWord);
     return index->searchVal(ref);
+}
+
+DocumentParser& IndexHandler::parser()
+{
+    return dp;
 }

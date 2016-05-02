@@ -4,15 +4,16 @@ using namespace std;
 
 MyHash::MyHash()
 {
+    cout << "myhach created" << endl;
     buckets = 100;
-    occupied = 0;
+    numInserted = 0;
     table = new AvlTree[buckets];
 }
 
 MyHash::MyHash(int maxBuckets)
 {
     buckets = maxBuckets;
-    occupied = 0;
+    numInserted = 0;
     table = new AvlTree[buckets];
 }
 
@@ -20,6 +21,7 @@ MyHash::~MyHash()
 {
     if(table!=nullptr)
         delete table;
+    cout << "myhash deleted" << endl;
 }
 
 WordRef* MyHash::searchVal(WordRef &val)
@@ -36,5 +38,28 @@ void MyHash::insert(WordRef & toInsert)
     //hash the string and put it in the array that is already thaere
     int hashVal = strHash(toInsert.getWord())%buckets;
     table[hashVal].insert(toInsert);
+    numInserted++;
+    iters.push_back(table[hashVal].searchVal(toInsert));
+}
+
+int MyHash::getNumElements()
+{
+    cout << "mehh" << endl;
+    return numInserted;
+}
+
+int MyHash::getNumBuckets()
+{
+    return buckets;
+}
+
+AvlTree* MyHash::getTable(){
+    return table;
+}
+
+
+vector<WordRef*>& MyHash::getIters()
+{
+    return iters;
 }
 

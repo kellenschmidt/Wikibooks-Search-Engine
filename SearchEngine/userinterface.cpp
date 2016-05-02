@@ -1,10 +1,3 @@
-/*
- * File: Userinterface.cpp
- * Owner: Kellen Schmidt
- * Update History:
- *
- */
-
 #include "documentparser.h"
 #include "indexhandler.h"
 #include "userinterface.h"
@@ -15,6 +8,7 @@
 #include <cctype>
 #include <string>
 #include <limits>
+#include <algorithm>
 
 using namespace std;
 
@@ -76,6 +70,7 @@ void UserInterface::displayMainMenu()
     case 0:
         // Write index to the persistent index file
         indexhandler.writePersistentIndex();
+        indexhandler.deleteIndex();
 
         exit(EXIT_SUCCESS);
         break;
@@ -125,6 +120,7 @@ void UserInterface::enterMaintenanceMode()
 
     // Create variable to hold the path input by user
     string path;
+    size_t foundPos;
 
     // Execute chosen menu item
     switch(choiceInt)
@@ -136,10 +132,18 @@ void UserInterface::enterMaintenanceMode()
         cout << "\nEnter path to new documents: ";
         getline(cin, path);
 
-        while(!ifstream(path))
+        // Repeat input until valid or cancel
+        while(!ifstream(path) || find(indexhandler.getPaths().begin(), indexhandler.getPaths().end(), path) != indexhandler.getPaths().end())
         {
-            cout << "Invalid path.\nEnter path to new documents (\"0\" to return to Maintenance Mode): ";
+            if(!ifstream(path))
+                cout << "Invalid path.\nEnter path to new documents (\"0\" to return to Maintenance Mode): ";
+            else
+                cout << "Path is already added.\nEnter path to new documents (\"0\" to return to Maintenance Mode): ";
+
+            // Reenter input
             getline(cin, path);
+
+            // Cancel if input is sentinal value
             if(path == "0")
                 enterMaintenanceMode();
         }
@@ -175,8 +179,6 @@ void UserInterface::enterInteractiveMode()
     string choice;
     cin >> choice;
     // Ignore characters after and including spaces
-    //std::cout << "SearchVal private\n";
-    //WordRef* temp = nullptr;
     cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
     // Loop until input is all digits and within the range
@@ -207,38 +209,46 @@ void UserInterface::enterInteractiveMode()
         break;
     case 2:
         indexhandler.setIndexType(choiceInt);
-        //enterInteractiveMode();
         break;
     default:
         cerr << "Error: Invalid choice in interactive mode\n";
         exit(EXIT_FAILURE);
     }
 
+    if(indexhandler.getNewPaths().empty())
+    {
+        indexhandler.clearTop50Words();
+        indexhandler.deleteIndex();
+    }
+
     // Create index using the index type
     indexhandler.createIndex();
 
-    // Index is empty and no new documents are staged to add
     // Read persistent index into index
-    if(indexhandler.getPaths().empty() && indexhandler.getNewPaths().empty())
+    if(ifstream(indexhandler.getFileName()))
     {
         // If file already exists then read the persistent index
-        if(ifstream(indexhandler.getFileName()))
-        {
-            indexhandler.readPersistentIndex();
-        }
-        else
-        {
-            cout << "\nYou must add documents before loading index\n";
-            enterInteractiveMode();
-        }
+        indexhandler.readPersistentIndex();
+
+        displayQueryMenu();
     }
     // If there are documents staged to add then add them to index and persistent index
     else if(!indexhandler.getNewPaths().empty())
     {
         // Index all of the new paths
         indexhandler.indexPaths(indexhandler.getNewPaths());
-
-        // Display next menu
+        displayQueryMenu();
+    }
+    // Index is empty and no new documents are staged to be added
+    else if(indexhandler.getPaths().empty())
+    {
+         cout << "\nYou must add documents before loading index\n";
+         enterInteractiveMode();
+    }
+    else if(!indexhandler.getPaths().empty())
+    {
+        // Index all of the new paths
+        indexhandler.indexPaths(indexhandler.getPaths());
         displayQueryMenu();
     }
 }
@@ -285,15 +295,22 @@ void UserInterface::displayQueryMenu()
         enterInteractiveMode();
         break;
     case 1:
-        // TODO: Call some function to recieve process and output results of boolean query
         cout << "\nEnter query: ";
         getline(cin, query);
 
-        //QueryProcessor processor(indexhandler);
         processor.processQuery(query);
+
+        for(int i = 0; i < (processor.getResults().size() < 15 ? processor.getResults().size() : 15); i++)
+        {
+            cout << i + 1 << "\n\tid: " << processor.getResults()[i].getPageID() << "\n\tTF/IDF: " << processor.getResults()[i].getTfIdf() << "\n";
+        }
+
+        processor.clearResults();
         break;
     case 2:
     {
+        indexhandler.calculateStats();
+
         cout << "\nSEARCH ENGINE STATISTICS:\n"
              << "\nTotal number of pages indexed: " << indexhandler.getNumPages()
              << "\nTotal number of words indexed: " << indexhandler.getNumWords()
@@ -303,11 +320,11 @@ void UserInterface::displayQueryMenu()
         std::vector<std::pair<std::string,int>> top50Words = indexhandler.getTop50Words();
 
         // Print the column titles
-        cout << "    " << setw(30) << left << "Word" << "Frequency\n";
+        cout << "    " << setw(25) << left << "Word" << "Frequency\n";
         // Print the top 50 list
         for(size_t n=0; n<top50Words.size(); n++)
         {
-            cout << setw(2) << right << n+1 << ". " << setw(30) << left << top50Words[n].first << top50Words[n].second << "\n";
+            cout << setw(2) << right << n+1 << ". " << setw(25) << left << top50Words[n].first << top50Words[n].second << "\n";
         }
         break;
     }
@@ -328,11 +345,6 @@ bool UserInterface::isAllCharsDigit(string word)
         // If any character is a letter then return false
         if(isalpha(word[i]))
             return false;
-        if(word[i] == ' ')
-        {
-            word.erase(i, 1);
-            i--;
-        }
     }
     // If no characters are letters then return true
     return true;

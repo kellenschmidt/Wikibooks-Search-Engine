@@ -29,6 +29,20 @@ int PageLocation::getPageID()
     return pageID;
 }
 
+void PageLocation::setTfIdf(double arg)
+{
+    tfidf = arg;
+}
+
+void PageLocation::addTfIdf(double arg)
+{
+    tfidf += arg;
+}
+double PageLocation::getTfIdf()
+{
+    return tfidf;
+}
+
 vector<int>& PageLocation::getWordIndices()
 {
     return wordIndices;

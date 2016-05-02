@@ -1,8 +1,11 @@
 /*
  * File: Userinterface.h
- * Owner: Kellen Schmidt
+ * Name: Kellen Schmidt
  * Update History:
- *
+ * 4/5/16 - Created file and class
+ * 4/11/16 - Finished basic navigation of menus
+ * 4/16/16 - Updated to work with query processor
+ * 4/30/16 - Error handling and beautification
  */
 
 #ifndef USERINTERFACE_H
@@ -15,7 +18,10 @@
 class UserInterface
 {
 public:
+    // Set defualt values
     UserInterface();
+
+    // Display the first menu
     void displayMainMenu();
 
 private:

@@ -39,9 +39,19 @@ int AvlTree::nodeHeight(WordRef &val)
     return counter;
 }
 
+int AvlTree::getNumElements()
+{
+    return numElements;
+}
+
+TreeNode* AvlTree::getRoot()
+{
+    return root;
+}
+
 ////////////////PRIVATE FUNCTIONS/////////////////////////////////////
 ///
-TreeNode* AvlTree::rr_rotation(TreeNode* parent)
+inline TreeNode* AvlTree::rr_rotation(TreeNode* parent)
 {
         //std::cout << "rr\n";
     TreeNode* temp = parent->right;
@@ -51,7 +61,7 @@ TreeNode* AvlTree::rr_rotation(TreeNode* parent)
 }
 
 
-TreeNode* AvlTree::ll_rotation(TreeNode* parent)
+inline TreeNode* AvlTree::ll_rotation(TreeNode* parent)
 {
         //std::cout << "ll\n";
     TreeNode* temp = parent->left;
@@ -61,7 +71,7 @@ TreeNode* AvlTree::ll_rotation(TreeNode* parent)
 }
 
 
-TreeNode* AvlTree::lr_rotation(TreeNode* parent)
+inline TreeNode* AvlTree::lr_rotation(TreeNode* parent)
 {
         //std::cout << "lr\n";
     TreeNode* temp = parent->left;
@@ -69,7 +79,7 @@ TreeNode* AvlTree::lr_rotation(TreeNode* parent)
     return ll_rotation(parent);
 }
 
-TreeNode* AvlTree::rl_rotation(TreeNode* parent)
+inline TreeNode* AvlTree::rl_rotation(TreeNode* parent)
 {
         //std::cout << "rl\n";
     TreeNode* temp = parent->right;
@@ -77,7 +87,7 @@ TreeNode* AvlTree::rl_rotation(TreeNode* parent)
     return rr_rotation(parent);
 }
 
-int AvlTree::height(TreeNode* curr)
+inline int AvlTree::height(TreeNode* curr)
 {
     int h = 0;
     if(curr!= NULL)
@@ -90,7 +100,7 @@ int AvlTree::height(TreeNode* curr)
     return h;
 }
 
-int AvlTree::height_Diff(TreeNode* curr)
+inline int AvlTree::height_Diff(TreeNode* curr)
 {
     int l_height = height(curr->left);
     int r_height = height(curr->right);
@@ -98,7 +108,7 @@ int AvlTree::height_Diff(TreeNode* curr)
     return diff;
 }
 
-TreeNode* AvlTree::balance(TreeNode* curr)
+inline TreeNode* AvlTree::balance(TreeNode* curr)
 {
     int bal_factor = height_Diff(curr);
     if(bal_factor > 1)
@@ -118,7 +128,7 @@ TreeNode* AvlTree::balance(TreeNode* curr)
     return curr;
 }
 
-void AvlTree::heightHelper(WordRef val, TreeNode* &curr, int &counter)
+inline void AvlTree::heightHelper(WordRef val, TreeNode* &curr, int &counter)
 {
     if(curr->data == val)
         return;
@@ -144,7 +154,7 @@ void AvlTree::heightHelper(WordRef val, TreeNode* &curr, int &counter)
     }
 }
 
-void AvlTree::insert(WordRef val, TreeNode* &curr)
+inline void AvlTree::insert(WordRef val, TreeNode* &curr)
 {
     if(curr==nullptr)
     {
@@ -152,6 +162,9 @@ void AvlTree::insert(WordRef val, TreeNode* &curr)
         TreeNode* leaf = new TreeNode;
         leaf->data = val;
         curr = leaf;
+        numElements++;
+        //this is where i add the pointer to iters --- Luke
+        iters.push_back(&(curr->data));
     }
     else
     {
@@ -166,9 +179,10 @@ void AvlTree::insert(WordRef val, TreeNode* &curr)
             curr = balance(curr);
         }
     }
+
 }
 
-WordRef* AvlTree::searchVal(WordRef &val, TreeNode* curr)
+inline WordRef* AvlTree::searchVal(WordRef &val, TreeNode* curr)
 {
     if(curr == nullptr)
         return nullptr;
@@ -195,7 +209,7 @@ WordRef* AvlTree::searchVal(WordRef &val, TreeNode* curr)
     }
 }
 
-WordRef* AvlTree::searchVal(string &val, TreeNode* curr)
+inline WordRef* AvlTree::searchVal(string &val, TreeNode* curr)
 {
     if(curr == nullptr)
         return nullptr;
@@ -219,4 +233,9 @@ WordRef* AvlTree::searchVal(string &val, TreeNode* curr)
         else
             return nullptr;
     }
+}
+
+std::vector<WordRef*>& AvlTree::getIters()
+{
+    return iters;
 }
