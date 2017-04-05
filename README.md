@@ -2,7 +2,7 @@
 
 A search engine for [Wikibooks](wikibooks.org), a library of more than 200,000 pages of educational reference documents.
 
-Parses the entire contents of the site in under 1 minute and searches instantaneous
+Parses the entire contents of the site in under 1 minute and searches instantaneously
 
 ## Features
 - Inverted file index 
