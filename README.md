@@ -1,10 +1,15 @@
 # Search Engine
 
-### The Team
-Luke, Kellen and Oscar
+A search engine for [Wikibooks](wikibooks.org), a library of more than 200,000 pages of educational reference documents.
 
-### The Motto
-Use GitHub, Don't Procractinate
+Parses the entire contents of the site in under 1 minute and searches instantaneous
 
-### The Goal
-Git Gud m8
+## Features
+- Inverted file index 
+- TF/IDF relevancy ranking
+- Boolean query processing
+- 2 underlying data structures
+  - Hash Table
+  - AVL Tree
+- Persistent index
+- GUI created with QT Creator
